@@ -73,6 +73,7 @@ impl<R: BufRead> RdfXmlParser<R> {
                 }],
                 namespace_buffer: Vec::default(),
                 bnode_id_generator: BlankNodeIdGenerator::default(),
+                element_depth: 0,
                 in_literal_depth: 0,
                 known_rdf_id: HashSet::default(),
             },
@@ -233,6 +234,7 @@ struct RdfXmlReader<R: BufRead> {
     state: Vec<RdfXmlState>,
     namespace_buffer: Vec<u8>,
     bnode_id_generator: BlankNodeIdGenerator,
+    element_depth: usize,
     in_literal_depth: usize,
     known_rdf_id: HashSet<String>,
 }
@@ -243,6 +245,8 @@ impl<R: BufRead> RdfXmlReader<R> {
         event: BytesStart<'_>,
         on_triple: &mut impl FnMut(Triple<'_>) -> Result<(), E>,
     ) -> Result<(), E> {
+        self.element_depth += 1;
+
         //Literal case
         if let Some(RdfXmlState::ParseTypeLiteralPropertyElt { writer, .. }) = self.state.last_mut()
         {
@@ -617,6 +621,17 @@ impl<R: BufRead> RdfXmlReader<R> {
         if let Some(current_state) = self.state.pop() {
             self.end_state(current_state, on_triple)?;
         }
+
+        self.element_depth -= 1;
+        if self.element_depth == 1{
+            //println!("END DEPTH {}", self.element_depth);
+            on_triple(Triple {
+                subject: NamedOrBlankNode::from(NamedNode { iri: "http://example.com/stanza-end" }).into(),
+                predicate: NamedNode { iri: RDF_TYPE },
+                object: NamedOrBlankNode::from(NamedNode { iri: "http://example.com" }).into(),
+            })?;
+        }
+
         Ok(())
     }
 
@@ -703,6 +718,7 @@ impl<R: BufRead> RdfXmlReader<R> {
                 .into())
             }
         };
+        //println!("SUBJECT {} {}", self.element_depth, subject);
 
         self.emit_property_attrs(subject, property_attrs, &language, on_triple)?;
 
