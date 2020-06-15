@@ -398,13 +398,13 @@ impl<R: BufRead> RdfXmlReader<R> {
         let id_attr = match id_attr {
             Some(iri) => {
                 let iri = resolve(&base_iri, iri)?;
-                if self.known_rdf_id.contains(&iri) {
-                    return Err(RdfXmlError::from(format!(
-                        "{} has already been used as rdf:ID value",
-                        &iri
-                    ))
-                    .into());
-                }
+                //if self.known_rdf_id.contains(&iri) {
+                //    return Err(RdfXmlError::from(format!(
+                //        "{} has already been used as rdf:ID value",
+                //        &iri
+                //    ))
+                //    .into());
+                //}
                 self.known_rdf_id.insert(iri.clone());
                 Some(OwnedNamedNode { iri })
             }
