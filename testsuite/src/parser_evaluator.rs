@@ -3,6 +3,7 @@ use crate::manifest::{Test, TestManifestError};
 use crate::model::OwnedDataset;
 use crate::report::{TestOutcome, TestResult};
 use chrono::Utc;
+use oxiri::Iri;
 use rio_api::model::*;
 use rio_api::parser::*;
 use rio_turtle::*;
@@ -73,7 +74,7 @@ pub fn evaluate_parser_tests(
                     },
                 }
             } else {
-                return Err(TestManifestError::InvalidTestType(test.kind.clone()).into())
+                return Err(TestManifestError::InvalidTestType(test.kind).into())
             };
             Ok(TestResult {
                 test: test.id,
@@ -100,7 +101,7 @@ pub fn read_w3c_rdf_test_file(
     }?);
 
     Ok(BufReader::new(File::open(&path).map_err(|e| {
-        TestEvaluationError::IO(path.to_string_lossy().to_string(), e)
+        TestEvaluationError::Io(path.to_string_lossy().to_string(), e)
     })?))
 }
 
@@ -110,24 +111,25 @@ pub fn parse_w3c_rdf_test_file(
 ) -> Result<OwnedDataset, Box<dyn Error>> {
     let read = read_w3c_rdf_test_file(url, tests_path)?;
 
+    let base_iri = Iri::parse(url.to_owned())?;
     if url.ends_with(".nt") {
-        NTriplesParser::new(read)?
+        NTriplesParser::new(read)
             .into_iter(|t| Ok(t.into()))
             .collect()
     } else if url.ends_with(".nq") {
-        NQuadsParser::new(read)?
+        NQuadsParser::new(read)
             .into_iter(|t| Ok(t.into()))
             .collect()
     } else if url.ends_with(".ttl") {
-        TurtleParser::new(read, url)?
+        TurtleParser::new(read, Some(base_iri))
             .into_iter(|t| Ok(t.into()))
             .collect()
     } else if url.ends_with(".trig") {
-        TriGParser::new(read, url)?
+        TriGParser::new(read, Some(base_iri))
             .into_iter(|t| Ok(t.into()))
             .collect()
     } else if url.ends_with(".rdf") {
-        RdfXmlParser::new(read, url)?
+        RdfXmlParser::new(read, Some(base_iri))
             .into_iter(|t| Ok(t.into()))
             .collect()
     } else {
@@ -143,21 +145,22 @@ pub fn parse_w3c_rdf_test_file_for_gtrig(
     tests_path: &Path,
 ) -> Result<OwnedDataset, Box<dyn Error>> {
     let read = read_w3c_rdf_test_file(url, tests_path)?;
+    let base_iri = Iri::parse(url.to_owned())?;
 
     if url.ends_with(".nt") {
-        NTriplesParser::new(read)?
+        NTriplesParser::new(read)
             .into_iter(|t| Ok(t.into()))
             .collect()
     } else if url.ends_with(".nq") {
-        NQuadsParser::new(read)?
+        NQuadsParser::new(read)
             .into_iter(|t| Ok(t.into()))
             .collect()
     } else if url.ends_with(".ttl") {
-        TurtleParser::new(read, url)?
+        TurtleParser::new(read, Some(base_iri))
             .into_iter(|t| Ok(t.into()))
             .collect()
     } else if url.ends_with(".trig") {
-        GTriGParser::new(read, url)?
+        GTriGParser::new(read, Some(base_iri))
             .into_iter(|t| Ok(Quad::try_from(t)?.into()))
             .collect()
     } else {
@@ -171,7 +174,7 @@ pub fn parse_w3c_rdf_test_file_for_gtrig(
 pub enum TestEvaluationError {
     UnknownTestUrl(String),
     UnsupportedFormat(String),
-    IO(String, io::Error),
+    Io(String, io::Error),
 }
 
 impl fmt::Display for TestEvaluationError {
@@ -185,7 +188,7 @@ impl fmt::Display for TestEvaluationError {
                 "The extension of {} does not match any supported format",
                 u
             ),
-            TestEvaluationError::IO(file, error) => {
+            TestEvaluationError::Io(file, error) => {
                 write!(f, "I/O error on file {}: {}", file, error)
             }
         }

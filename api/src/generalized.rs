@@ -1,5 +1,5 @@
 //! This module contains extensions for generalized RDF.
-//! Its elements are re-exported by ``model`` and ``parser``, respectively.
+//! Its elements are re-exported by `model` and `parser`, respectively.
 
 /// Data structures for generalized [RDF 1.1 Concepts](https://www.w3.org/TR/rdf11-concepts/),
 /// allowing variables, and any kind of node in any Triple/Quad position.
@@ -31,6 +31,7 @@ pub mod model {
     }
 
     impl<'a> fmt::Display for Variable<'a> {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             write!(f, "?{}", self.name)
         }
@@ -46,7 +47,7 @@ pub mod model {
     /// * [literals](https://www.w3.org/TR/rdf11-concepts/#dfn-literal) and
     /// * [variable](https://www.w3.org/TR/sparql11-query/#QSynVariables).
     ///
-    /// The default string formatter is returning a N-Triples, Turtle and SPARQL compatible representation.
+    /// The default string formatter is returning an N-Triples, Turtle and SPARQL compatible representation.
     ///
     /// Using it requires to enable the `generalized` feature.
     #[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
@@ -58,30 +59,35 @@ pub mod model {
     }
 
     impl<'a> From<NamedNode<'a>> for GeneralizedTerm<'a> {
+        #[inline]
         fn from(other: NamedNode<'a>) -> GeneralizedTerm<'a> {
             GeneralizedTerm::NamedNode(other)
         }
     }
 
     impl<'a> From<BlankNode<'a>> for GeneralizedTerm<'a> {
+        #[inline]
         fn from(other: BlankNode<'a>) -> GeneralizedTerm<'a> {
             GeneralizedTerm::BlankNode(other)
         }
     }
 
     impl<'a> From<Literal<'a>> for GeneralizedTerm<'a> {
+        #[inline]
         fn from(other: Literal<'a>) -> GeneralizedTerm<'a> {
             GeneralizedTerm::Literal(other)
         }
     }
 
     impl<'a> From<Variable<'a>> for GeneralizedTerm<'a> {
+        #[inline]
         fn from(other: Variable<'a>) -> GeneralizedTerm<'a> {
             GeneralizedTerm::Variable(other)
         }
     }
 
     impl<'a> From<NamedOrBlankNode<'a>> for GeneralizedTerm<'a> {
+        #[inline]
         fn from(other: NamedOrBlankNode<'a>) -> GeneralizedTerm<'a> {
             match other {
                 NamedOrBlankNode::NamedNode(inner) => GeneralizedTerm::NamedNode(inner),
@@ -91,6 +97,7 @@ pub mod model {
     }
 
     impl<'a> From<Term<'a>> for GeneralizedTerm<'a> {
+        #[inline]
         fn from(other: Term<'a>) -> GeneralizedTerm<'a> {
             match other {
                 Term::NamedNode(inner) => GeneralizedTerm::NamedNode(inner),
@@ -102,17 +109,19 @@ pub mod model {
 
     impl<'a> TryFrom<GeneralizedTerm<'a>> for NamedNode<'a> {
         type Error = StrictRdfError;
+
+        #[inline]
         fn try_from(other: GeneralizedTerm<'a>) -> Result<NamedNode<'a>, StrictRdfError> {
             match other {
                 GeneralizedTerm::NamedNode(inner) => Ok(inner),
                 GeneralizedTerm::BlankNode(_) => Err(StrictRdfError {
-                    message: "Blank node can not be used as predicate",
+                    message: "Blank node cannot be used as predicate",
                 }),
                 GeneralizedTerm::Literal(_) => Err(StrictRdfError {
-                    message: "Literal can not be used as predicate",
+                    message: "Literal cannot be used as predicate",
                 }),
                 GeneralizedTerm::Variable(_) => Err(StrictRdfError {
-                    message: "Variable can not be converted to Term",
+                    message: "Variable cannot be converted to Term",
                 }),
             }
         }
@@ -120,15 +129,17 @@ pub mod model {
 
     impl<'a> TryFrom<GeneralizedTerm<'a>> for NamedOrBlankNode<'a> {
         type Error = StrictRdfError;
+
+        #[inline]
         fn try_from(other: GeneralizedTerm<'a>) -> Result<NamedOrBlankNode<'a>, StrictRdfError> {
             match other {
                 GeneralizedTerm::NamedNode(inner) => Ok(NamedOrBlankNode::NamedNode(inner)),
                 GeneralizedTerm::BlankNode(inner) => Ok(NamedOrBlankNode::BlankNode(inner)),
                 GeneralizedTerm::Literal(_) => Err(StrictRdfError {
-                    message: "Literal can not be used a subject",
+                    message: "Literal cannot be used a subject",
                 }),
                 GeneralizedTerm::Variable(_) => Err(StrictRdfError {
-                    message: "Variable can not be converted to Term",
+                    message: "Variable cannot be converted to Term",
                 }),
             }
         }
@@ -136,19 +147,22 @@ pub mod model {
 
     impl<'a> TryFrom<GeneralizedTerm<'a>> for Term<'a> {
         type Error = StrictRdfError;
+
+        #[inline]
         fn try_from(other: GeneralizedTerm<'a>) -> Result<Term<'a>, StrictRdfError> {
             match other {
                 GeneralizedTerm::NamedNode(inner) => Ok(Term::NamedNode(inner)),
                 GeneralizedTerm::BlankNode(inner) => Ok(Term::BlankNode(inner)),
                 GeneralizedTerm::Literal(inner) => Ok(Term::Literal(inner)),
                 GeneralizedTerm::Variable(_) => Err(StrictRdfError {
-                    message: "Variable can not be converted to Term",
+                    message: "Variable cannot be converted to Term",
                 }),
             }
         }
     }
 
     impl<'a> fmt::Display for GeneralizedTerm<'a> {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
                 GeneralizedTerm::NamedNode(node) => node.fmt(f),
@@ -199,6 +213,7 @@ pub mod model {
     }
 
     impl<'a> From<Quad<'a>> for GeneralizedQuad<'a> {
+        #[inline]
         fn from(other: Quad<'a>) -> GeneralizedQuad<'a> {
             GeneralizedQuad {
                 subject: other.subject.into(),
@@ -212,6 +227,7 @@ pub mod model {
     impl<'a> TryFrom<GeneralizedQuad<'a>> for Quad<'a> {
         type Error = StrictRdfError;
 
+        #[inline]
         fn try_from(other: GeneralizedQuad<'a>) -> Result<Quad<'a>, StrictRdfError> {
             Ok(Quad {
                 subject: other.subject.try_into()?,
@@ -228,10 +244,11 @@ pub mod model {
     impl<'a> TryFrom<GeneralizedQuad<'a>> for Triple<'a> {
         type Error = StrictRdfError;
 
+        #[inline]
         fn try_from(other: GeneralizedQuad<'a>) -> Result<Triple<'a>, StrictRdfError> {
             match other.graph_name {
                 Some(_) => Err(StrictRdfError {
-                    message: "Quad in named graph can not be converted to Triple",
+                    message: "Quad in named graph cannot be converted to Triple",
                 }),
                 None => Ok(Triple {
                     subject: other.subject.try_into()?,
@@ -243,6 +260,7 @@ pub mod model {
     }
 
     impl<'a> fmt::Display for GeneralizedQuad<'a> {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             if let Some(graph_name) = self.graph_name {
                 write!(f, "GRAPH {} {{ ", graph_name)?;
@@ -257,13 +275,14 @@ pub mod model {
 
     //
 
-    /// An error raised when generalized RDF can not be converted to strict RDF.
+    /// An error raised when generalized RDF cannot be converted to strict RDF.
     #[derive(Debug, Clone, Copy)]
     pub struct StrictRdfError {
         message: &'static str,
     }
 
     impl<'a> fmt::Display for StrictRdfError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             self.message.fmt(f)
         }
@@ -277,7 +296,7 @@ pub mod parser {
     use super::model::GeneralizedQuad;
     use std::error::Error;
 
-    /// A parser returning generalized [`Quad`](../model/struct.Quad.html).
+    /// A parser returning generalized [`Quad`](super::model::Quad).
     ///
     /// Using it requires to enable the `generalized` feature.
     pub trait GeneralizedQuadsParser {
@@ -285,7 +304,7 @@ pub mod parser {
 
         /// Parses the complete file and calls `on_quad` each time a new quad is read.
         ///
-        /// May fail on errors caused by the parser itself or by the callback function ``on_quad``.
+        /// May fails on errors caused by the parser itself or by the callback function `on_quad`.
         fn parse_all<E: From<Self::Error>>(
             &mut self,
             on_quad: &mut impl FnMut(GeneralizedQuad<'_>) -> Result<(), E>,
@@ -299,9 +318,9 @@ pub mod parser {
         /// Parses a small chunk of the file and calls `on_quad` each time a new quad is read.
         /// (A "small chunk" could be a line for an N-Quads parser.)
         ///
-        /// This method should be called as long as [`is_end`](#tymethod.is_end) returns false.
+        /// This method should be called as long as [`is_end`](GeneralizedQuadsParser::is_end) returns false.
         ///
-        /// May fail on errors caused by the parser itself or by the callback function ``on_quad``.
+        /// May fails on errors caused by the parser itself or by the callback function `on_quad`.
         fn parse_step<E: From<Self::Error>>(
             &mut self,
             on_quad: &mut impl FnMut(GeneralizedQuad<'_>) -> Result<(), E>,
@@ -312,7 +331,7 @@ pub mod parser {
 
         /// Converts the parser into a `Result<T, E>` iterator.
         ///
-        /// `convert_quad` is a function converting Rio [`GeneralizedQuad`](../gmodel/struct.GeneralizedQuad.html)s to `T`.
+        /// `convert_quad` is a function converting Rio [`GeneralizedQuad`]s to `T`.
         fn into_iter<T, E, F>(
             self,
             convert_quad: F,
@@ -330,7 +349,7 @@ pub mod parser {
         }
     }
 
-    /// Created with the method [`into_iter`](trait.GeneralizedQuadsParser.html#method.into_iter).
+    /// Created with the method [`into_iter`](GeneralizedQuadsParser::into_iter()).
     ///
     /// Using it requires to enable the `generalized` feature.
     pub struct GeneralizedQuadsParserIterator<
